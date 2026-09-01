@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Цеттель</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="#" class="site-title">Цеттель</a>
+      <nav class="site-nav">
+        <a href="#" class="nav-item" data-route="index">Оглавление</a>
+        <span class="nav-separator">|</span>
+        <a href="#tags" class="nav-item" data-route="tags">Теги</a>
+        <span class="nav-separator">|</span>
+        <a href="#random" class="nav-item" data-route="random">Случайная</a>
+        <span class="nav-separator">|</span>
+        <button class="nav-item search-toggle" aria-label="Поиск">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <div class="quote-wrapper">
+    <p class="site-quote">Времени не существует, а эти строчки, которые я сейчас пишу, в этот момент перечитываю я, но уже в другом настоящем.</p>
+  </div>
+
+  <div class="search-panel" id="search-panel">
+    <div class="search-inner">
+      <input type="text" id="search-input" placeholder="Поиск по тексту или номеру...">
+      <button class="search-close" aria-label="Закрыть поиск">×</button>
+    </div>
+  </div>
+
+  <main id="app">
+    <div id="main-container"></div>
+  </main>
+
+  <div id="lightbox" class="lightbox">
+    <button class="lightbox-close" aria-label="Закрыть">×</button>
+    <div class="lightbox-content">
+      <img src="" alt="" id="lightbox-img">
+      <p class="lightbox-error">Изображение не найдено</p>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
