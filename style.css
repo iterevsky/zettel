@@ -64,6 +64,20 @@ button {
   line-height: 1.1;
 }
 
+.site-branding {
+  display: block;
+}
+
+.site-author {
+  font-family: 'Caveat', cursive;
+  font-size: 1.15rem;
+  color: #c45c3e;
+  margin-left: 2.4rem;
+  margin-top: 0.1rem;
+  line-height: 1;
+  display: block;
+}
+
 .site-nav {
   display: flex;
   align-items: center;
@@ -532,6 +546,11 @@ button {
 
   .site-title {
     font-size: 2.2rem;
+  }
+
+  .site-author {
+    font-size: 1rem;
+    margin-left: 1.6rem;
   }
 
   .site-nav {
