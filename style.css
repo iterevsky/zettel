@@ -62,20 +62,28 @@ button {
   font-weight: 400;
   color: var(--text);
   line-height: 1.1;
+  margin: 0;
+}
+
+.site-title a {
+  color: inherit;
+  text-decoration: none;
 }
 
 .site-branding {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .site-author {
+  display: block;
   font-family: 'Caveat', cursive;
   font-size: 1.15rem;
   color: #c45c3e;
   margin-left: 2.4rem;
   margin-top: 0.1rem;
   line-height: 1;
-  display: block;
 }
 
 .site-nav {
@@ -550,7 +558,7 @@ button {
 
   .site-author {
     font-size: 1rem;
-    margin-left: 1.6rem;
+    margin-left: 1.7rem;
   }
 
   .site-nav {
