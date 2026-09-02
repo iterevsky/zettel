@@ -421,7 +421,6 @@
 
   resumeNo.addEventListener('click', () => {
     resumeDialog.classList.remove('open');
-    window.location.hash = '#';
     showSplash();
   });
 
