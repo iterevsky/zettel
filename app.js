@@ -93,28 +93,39 @@
     return splash.style.display !== 'none' && getComputedStyle(splash).display !== 'none';
   }
 
-  function hideSplash() {
-    if (!splash || splash.dataset.hiding === 'true') return;
-    splash.dataset.hiding = 'true';
-    console.log('hideSplash called');
-
-    splash.style.transition = 'opacity 600ms ease';
-    splash.style.opacity = '0';
-
-    setTimeout(() => {
-      splash.style.display = 'none';
-      splash.dataset.hiding = '';
-      localStorage.setItem('zettel-visited', 'true');
-      handleRoute();
-    }, 600);
+  function resetSplashState() {
+    if (!splash) return;
+    splash.classList.remove('hiding');
+    splash.dataset.hiding = '';
+    splash.style.opacity = '1';
+    splash.style.display = 'none';
   }
 
   function showSplash() {
+    if (!splash) return;
     splash.classList.remove('hiding');
     splash.dataset.hiding = '';
     splash.style.transition = 'opacity 600ms ease';
     splash.style.opacity = '1';
     splash.style.display = 'flex';
+    console.log('showSplash called');
+  }
+
+  function hideSplash() {
+    if (!splash || splash.dataset.hiding === 'true') return;
+    splash.dataset.hiding = 'true';
+    console.log('hideSplash called');
+
+    splash.classList.add('hiding');
+
+    setTimeout(() => {
+      splash.style.display = 'none';
+      splash.classList.remove('hiding');
+      splash.style.opacity = '1';
+      splash.dataset.hiding = '';
+      localStorage.setItem('zettel-visited', 'true');
+      handleRoute();
+    }, 600);
   }
 
   document.addEventListener('click', e => {
@@ -538,12 +549,20 @@
 
   /* ---------- Старт ---------- */
   function boot() {
-    if (!localStorage.getItem('zettel-visited')) {
+    resetSplashState();
+
+    const visited = localStorage.getItem('zettel-visited');
+    const lastNote = localStorage.getItem('zettel-last-note');
+
+    if (!visited) {
       setTheme('dark');
       showSplash();
-    } else {
+    } else if (lastNote) {
       initTheme();
       showResumeDialog();
+    } else {
+      initTheme();
+      handleRoute();
     }
   }
 
