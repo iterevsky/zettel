@@ -71,24 +71,32 @@
   /* ---------- Тема ---------- */
   function initTheme() {
     const saved = localStorage.getItem('zettel-theme');
-    if (saved === 'dark') {
-      document.body.dataset.theme = 'dark';
-    }
+    document.body.dataset.theme = saved || '';
+  }
+
+  function setTheme(theme) {
+    document.body.dataset.theme = theme;
+    localStorage.setItem('zettel-theme', theme);
   }
 
   function toggleTheme() {
-    const isDark = document.body.dataset.theme === 'dark';
-    document.body.dataset.theme = isDark ? '' : 'dark';
-    localStorage.setItem('zettel-theme', document.body.dataset.theme);
+    setTheme(document.body.dataset.theme === 'dark' ? '' : 'dark');
   }
 
   /* ---------- Splash screen ---------- */
+  function showSplash() {
+    splash.classList.remove('hiding');
+    splash.style.opacity = '1';
+    splash.style.display = 'flex';
+    splash.addEventListener('click', hideSplash, { once: true });
+  }
+
   function hideSplash() {
     splash.classList.add('hiding');
     setTimeout(() => {
       splash.style.display = 'none';
       localStorage.setItem('zettel-visited', 'true');
-      startApp();
+      handleRoute();
     }, 600);
   }
 
@@ -105,10 +113,6 @@
     } else {
       handleRoute();
     }
-  }
-
-  function startApp() {
-    showResumeDialog();
   }
 
   function renderContent(html) {
@@ -409,8 +413,6 @@
   searchInput.addEventListener('input', handleSearch);
   themeToggle.addEventListener('click', toggleTheme);
 
-  splash.addEventListener('click', hideSplash, { once: true });
-
   resumeYes.addEventListener('click', () => {
     const savedId = localStorage.getItem('zettel-last-note');
     resumeDialog.classList.remove('open');
@@ -418,9 +420,9 @@
   });
 
   resumeNo.addEventListener('click', () => {
-    localStorage.removeItem('zettel-last-note');
     resumeDialog.classList.remove('open');
     window.location.hash = '#';
+    showSplash();
   });
 
   document.addEventListener('keydown', e => {
@@ -502,12 +504,11 @@
   });
 
   /* ---------- Старт ---------- */
-  initTheme();
-
   if (!localStorage.getItem('zettel-visited')) {
-    splash.style.display = 'flex';
+    setTheme('dark');
+    showSplash();
   } else {
-    splash.style.display = 'none';
-    startApp();
+    initTheme();
+    showResumeDialog();
   }
 })();
