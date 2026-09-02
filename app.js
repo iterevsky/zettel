@@ -88,33 +88,51 @@
   }
 
   /* ---------- Splash screen ---------- */
-  function onSplashClick(e) {
-    if (e.type === 'touchstart') {
-      e.preventDefault();
-    }
-    hideSplash();
-  }
-
-  function showSplash() {
-    splash.classList.remove('hiding');
-    splash.style.opacity = '1';
-    splash.style.display = 'flex';
-    splash.removeEventListener('click', onSplashClick);
-    splash.removeEventListener('touchstart', onSplashClick);
-    splash.addEventListener('click', onSplashClick);
-    splash.addEventListener('touchstart', onSplashClick, { passive: false });
+  function isSplashVisible() {
+    if (!splash) return false;
+    return splash.style.display !== 'none' && getComputedStyle(splash).display !== 'none';
   }
 
   function hideSplash() {
-    splash.classList.add('hiding');
-    splash.removeEventListener('click', onSplashClick);
-    splash.removeEventListener('touchstart', onSplashClick);
+    if (!splash || splash.dataset.hiding === 'true') return;
+    splash.dataset.hiding = 'true';
+    console.log('hideSplash called');
+
+    splash.style.transition = 'opacity 600ms ease';
+    splash.style.opacity = '0';
+
     setTimeout(() => {
       splash.style.display = 'none';
+      splash.dataset.hiding = '';
       localStorage.setItem('zettel-visited', 'true');
       handleRoute();
     }, 600);
   }
+
+  function showSplash() {
+    splash.classList.remove('hiding');
+    splash.dataset.hiding = '';
+    splash.style.transition = 'opacity 600ms ease';
+    splash.style.opacity = '1';
+    splash.style.display = 'flex';
+  }
+
+  document.addEventListener('click', e => {
+    if (!isSplashVisible()) return;
+    if (splash.contains(e.target)) {
+      console.log('SPLASH CLICKED via document listener');
+      hideSplash();
+    }
+  });
+
+  document.addEventListener('keydown', e => {
+    if (!isSplashVisible()) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      console.log('SPLASH KEY PRESSED');
+      hideSplash();
+    }
+  });
 
   /* ---------- Resume dialog ---------- */
   function saveLastNote(id) {
