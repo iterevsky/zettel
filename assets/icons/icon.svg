@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Old+Standard+TT:wght@400&amp;display=swap');
+
+      .bg {
+        fill: #f5f2eb;
+      }
+
+      .letter {
+        font-family: 'Old Standard TT', serif;
+        font-size: 320px;
+        fill: #c45c3e;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .bg {
+          fill: #1a1612;
+        }
+
+        .letter {
+          fill: #e07a3f;
+        }
+      }
+    </style>
+  </defs>
+  <rect class="bg" width="512" height="512" rx="112"/>
+  <text class="letter" x="256" y="256" text-anchor="middle" dominant-baseline="central">Ц</text>
+</svg>
