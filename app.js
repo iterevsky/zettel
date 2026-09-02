@@ -17,6 +17,12 @@
   const lightboxImg = document.getElementById('lightbox-img');
   const lightboxError = document.querySelector('.lightbox-error');
   const lightboxClose = document.querySelector('.lightbox-close');
+  const splash = document.getElementById('splash');
+  const themeToggle = document.getElementById('theme-toggle');
+  const resumeDialog = document.getElementById('resume-dialog');
+  const resumeId = document.getElementById('resume-id');
+  const resumeYes = document.getElementById('resume-yes');
+  const resumeNo = document.getElementById('resume-no');
 
   /* ---------- Backlinks ---------- */
   const backlinks = {};
@@ -60,6 +66,49 @@
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  /* ---------- Тема ---------- */
+  function initTheme() {
+    const saved = localStorage.getItem('zettel-theme');
+    if (saved === 'dark') {
+      document.body.dataset.theme = 'dark';
+    }
+  }
+
+  function toggleTheme() {
+    const isDark = document.body.dataset.theme === 'dark';
+    document.body.dataset.theme = isDark ? '' : 'dark';
+    localStorage.setItem('zettel-theme', document.body.dataset.theme);
+  }
+
+  /* ---------- Splash screen ---------- */
+  function hideSplash() {
+    splash.classList.add('hiding');
+    setTimeout(() => {
+      splash.style.display = 'none';
+      localStorage.setItem('zettel-visited', 'true');
+      startApp();
+    }, 600);
+  }
+
+  /* ---------- Resume dialog ---------- */
+  function saveLastNote(id) {
+    localStorage.setItem('zettel-last-note', id);
+  }
+
+  function showResumeDialog() {
+    const savedId = localStorage.getItem('zettel-last-note');
+    if (savedId && findNote(savedId)) {
+      resumeId.textContent = savedId;
+      resumeDialog.classList.add('open');
+    } else {
+      handleRoute();
+    }
+  }
+
+  function startApp() {
+    showResumeDialog();
   }
 
   function renderContent(html) {
@@ -145,6 +194,7 @@
     }
 
     currentNoteId = id;
+    saveLastNote(id);
     updateActiveNav('note');
 
     const body = processContent(note.content);
@@ -357,6 +407,21 @@
   searchToggle.addEventListener('click', () => toggleSearch());
   searchClose.addEventListener('click', () => toggleSearch(false));
   searchInput.addEventListener('input', handleSearch);
+  themeToggle.addEventListener('click', toggleTheme);
+
+  splash.addEventListener('click', hideSplash, { once: true });
+
+  resumeYes.addEventListener('click', () => {
+    const savedId = localStorage.getItem('zettel-last-note');
+    resumeDialog.classList.remove('open');
+    window.location.hash = `#${savedId}`;
+  });
+
+  resumeNo.addEventListener('click', () => {
+    localStorage.removeItem('zettel-last-note');
+    resumeDialog.classList.remove('open');
+    window.location.hash = '#';
+  });
 
   document.addEventListener('keydown', e => {
     if (e.key === '/' && document.activeElement !== searchInput) {
@@ -437,5 +502,12 @@
   });
 
   /* ---------- Старт ---------- */
-  handleRoute();
+  initTheme();
+
+  if (!localStorage.getItem('zettel-visited')) {
+    splash.style.display = 'flex';
+  } else {
+    splash.style.display = 'none';
+    startApp();
+  }
 })();

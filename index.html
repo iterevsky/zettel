@@ -10,6 +10,14 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="splash">
+    <img src="assets/images/cover.jpg" alt="">
+    <div class="splash-content">
+      <h1 class="splash-title">Цеттель</h1>
+      <span class="splash-author">Итеревский-Кочетов</span>
+    </div>
+  </div>
+
   <header class="site-header">
     <div class="site-branding">
       <h1 class="site-title">Цеттель</h1>
@@ -26,6 +34,23 @@
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="11" cy="11" r="8"></circle>
           <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+      <span class="nav-separator">|</span>
+      <button id="theme-toggle" aria-label="Переключить тему">
+        <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
         </svg>
       </button>
     </nav>
@@ -51,6 +76,16 @@
     <div class="lightbox-content">
       <img src="" alt="" id="lightbox-img">
       <p class="lightbox-error">Изображение не найдено</p>
+    </div>
+  </div>
+
+  <div id="resume-dialog">
+    <div class="resume-box">
+      <p>Вы остановились на <span id="resume-id">Z-017</span></p>
+      <div class="resume-buttons">
+        <button id="resume-yes">Продолжить</button>
+        <button id="resume-no">Оглавление</button>
+      </div>
     </div>
   </div>
 
