@@ -1,9 +1,9 @@
 (function () {
   'use strict';
 
-  console.log('app.js loaded');
-  console.log('notes count:', typeof notes !== 'undefined' ? notes.length : 'undefined');
-  console.log('splash element:', document.getElementById('splash'));
+  console.log('APP STARTED');
+  console.log('notes:', typeof notes !== 'undefined' ? notes.length : 'undefined');
+  console.log('splash:', document.getElementById('splash'));
 
   /* ---------- Состояние ---------- */
   let currentNoteId = null;
@@ -519,11 +519,19 @@
   });
 
   /* ---------- Старт ---------- */
-  if (!localStorage.getItem('zettel-visited')) {
-    setTheme('dark');
-    showSplash();
+  function boot() {
+    if (!localStorage.getItem('zettel-visited')) {
+      setTheme('dark');
+      showSplash();
+    } else {
+      initTheme();
+      showResumeDialog();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    initTheme();
-    showResumeDialog();
+    boot();
   }
 })();
