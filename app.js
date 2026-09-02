@@ -466,6 +466,7 @@
 
   resumeNo.addEventListener('click', () => {
     resumeDialog.classList.remove('open');
+    location.hash = '';
     showSplash();
   });
 
