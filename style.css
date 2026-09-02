@@ -563,6 +563,9 @@ button {
   background: #000;
   opacity: 1;
   transition: opacity 600ms ease;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 #splash.hiding {

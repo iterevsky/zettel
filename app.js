@@ -1,6 +1,10 @@
 (function () {
   'use strict';
 
+  console.log('app.js loaded');
+  console.log('notes count:', typeof notes !== 'undefined' ? notes.length : 'undefined');
+  console.log('splash element:', document.getElementById('splash'));
+
   /* ---------- Состояние ---------- */
   let currentNoteId = null;
   let isTransitioning = false;
@@ -84,15 +88,27 @@
   }
 
   /* ---------- Splash screen ---------- */
+  function onSplashClick(e) {
+    if (e.type === 'touchstart') {
+      e.preventDefault();
+    }
+    hideSplash();
+  }
+
   function showSplash() {
     splash.classList.remove('hiding');
     splash.style.opacity = '1';
     splash.style.display = 'flex';
-    splash.addEventListener('click', hideSplash, { once: true });
+    splash.removeEventListener('click', onSplashClick);
+    splash.removeEventListener('touchstart', onSplashClick);
+    splash.addEventListener('click', onSplashClick);
+    splash.addEventListener('touchstart', onSplashClick, { passive: false });
   }
 
   function hideSplash() {
     splash.classList.add('hiding');
+    splash.removeEventListener('click', onSplashClick);
+    splash.removeEventListener('touchstart', onSplashClick);
     setTimeout(() => {
       splash.style.display = 'none';
       localStorage.setItem('zettel-visited', 'true');
