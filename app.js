@@ -54,7 +54,7 @@
   const pullHint = document.getElementById('pull-hint');
   const quoteWrapper = document.querySelector('.quote-wrapper');
   const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-  const siteTitleLink = document.querySelector('.site-title a');
+  const siteTitleLink = document.querySelector('.site-branding');
 
   /* ---------- Backlinks ---------- */
   const backlinks = {};
@@ -928,11 +928,12 @@
   searchInput.addEventListener('input', handleSearch);
   themeToggle.addEventListener('click', toggleTheme);
 
-  // Заголовок «Цеттель» — ссылка на оглавление с закрытием открытых панелей
+  // Блок брендинга — ссылка на оглавление с закрытием открытых панелей
   if (siteTitleLink) {
     siteTitleLink.addEventListener('click', () => {
       if (searchOpen) toggleSearch(false);
       if (isReaderSheetOpen()) toggleReaderSheet(false);
+      siteTitleLink.blur();
     });
   }
 

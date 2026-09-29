@@ -117,23 +117,36 @@ button {
   line-height: 1;
 }
 
-.site-title a {
-  color: inherit;
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.25s ease;
-}
-
-.site-title a:hover {
-  color: var(--accent);
-}
-
 .site-branding {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding-top: 1.5rem;
   padding-bottom: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.site-branding:focus {
+  outline: none;
+}
+
+.site-branding:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.site-title,
+.site-author {
+  transition: color 0.25s ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-branding:hover .site-title,
+  .site-branding:hover .site-author {
+    color: var(--accent) !important;
+  }
 }
 
 .site-author {
