@@ -23,6 +23,7 @@
       <h1 class="splash-title">Цеттель</h1>
       <span class="splash-author">Итеревский-Кочетов</span>
     </div>
+    <span class="splash-hint">раскрыть</span>
   </div>
 
   <header class="site-header">
@@ -34,6 +35,8 @@
       <a href="#" class="nav-item" data-route="index">Оглавление</a>
       <span class="nav-separator">|</span>
       <a href="#tags" class="nav-item" data-route="tags">Теги</a>
+      <span class="nav-separator">|</span>
+      <a href="#calendar" class="nav-item" data-route="calendar">Календарь</a>
       <span class="nav-separator">|</span>
       <a href="#random" class="nav-item" data-route="random">Случайная</a>
       <span class="nav-separator">|</span>
@@ -95,6 +98,37 @@
       </div>
     </div>
   </div>
+
+  <div id="dim-overlay"></div>
+
+  <div id="reader-backdrop"></div>
+  <div id="reader-sheet" role="dialog" aria-label="Настройки чтения">
+    <div class="reader-sheet-handle"></div>
+    <div class="reader-row">
+      <span class="reader-label">Шрифт</span>
+      <div class="reader-font-ctl">
+        <button id="font-minus" aria-label="Уменьшить шрифт">−</button>
+        <span class="font-dots">
+          <span class="font-dot"></span><span class="font-dot"></span><span class="font-dot"></span><span class="font-dot"></span>
+        </span>
+        <button id="font-plus" aria-label="Увеличить шрифт">+</button>
+      </div>
+    </div>
+    <div class="reader-row">
+      <span class="reader-label">Тон</span>
+      <div class="reader-tones">
+        <button class="reader-tone" data-tone="standard">Стандартный</button>
+        <button class="reader-tone" data-tone="soft">Мягкий</button>
+        <button class="reader-tone" data-tone="warm">Тёплый</button>
+      </div>
+    </div>
+    <div class="reader-row">
+      <span class="reader-label">Приглушение</span>
+      <input type="range" id="reader-dim" min="0" max="45" step="1" value="0" aria-label="Приглушение">
+    </div>
+  </div>
+
+  <div id="pull-hint">Потяните ещё</div>
 
   <script src="data.js"></script>
   <script src="app.js"></script>
