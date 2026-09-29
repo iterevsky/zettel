@@ -54,6 +54,7 @@
   const pullHint = document.getElementById('pull-hint');
   const quoteWrapper = document.querySelector('.quote-wrapper');
   const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+  const siteTitleLink = document.querySelector('.site-title a');
 
   /* ---------- Backlinks ---------- */
   const backlinks = {};
@@ -243,7 +244,6 @@
   /* ---------- Splash screen & сценарное вступление ---------- */
   const INTRO_QUOTE = 'Времени не существует…';
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let introFirstVisit = false;
   let introActive = false;
   let introFinished = false;
   let introSkipped = false;
@@ -281,6 +281,13 @@
 
   function showSplash() {
     if (!splash) return;
+    // Сброс состояния: вступление может проигрываться при каждом показе обложки
+    clearIntroTimers();
+    introActive = false;
+    introFinished = false;
+    introSkipped = false;
+    introRouted = false;
+
     splash.classList.remove('hiding');
     splash.classList.remove('opening');
     splash.dataset.hiding = '';
@@ -543,10 +550,8 @@
     if (splash.contains(e.target)) {
       if (reducedMotion) {
         finishIntro(true);
-      } else if (introFirstVisit) {
-        startIntro();
       } else {
-        hideSplash();
+        startIntro();
       }
     }
   });
@@ -565,10 +570,8 @@
       e.preventDefault();
       if (reducedMotion) {
         finishIntro(true);
-      } else if (introFirstVisit) {
-        startIntro();
       } else {
-        hideSplash();
+        startIntro();
       }
     }
   });
@@ -1028,12 +1031,6 @@
       });
     });
 
-    // Буквица: только если абзац начинается с буквы
-    const firstP = container.querySelector('.note-body > p');
-    if (firstP && /^\p{L}/u.test(firstP.textContent.trim())) {
-      firstP.classList.add('dropcap');
-    }
-
     document.querySelectorAll('.share-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const url = location.origin + location.pathname + '#' + currentNoteId;
@@ -1100,6 +1097,14 @@
   searchClose.addEventListener('click', () => toggleSearch(false));
   searchInput.addEventListener('input', handleSearch);
   themeToggle.addEventListener('click', toggleTheme);
+
+  // Заголовок «Цеттель» — ссылка на оглавление с закрытием открытых панелей
+  if (siteTitleLink) {
+    siteTitleLink.addEventListener('click', () => {
+      if (searchOpen) toggleSearch(false);
+      if (isReaderSheetOpen()) toggleReaderSheet(false);
+    });
+  }
 
   resumeYes.addEventListener('click', () => {
     const savedId = localStorage.getItem('zettel-last-note');
@@ -1300,12 +1305,12 @@
     resetSplashState();
     loadReaderState();
     applyReaderState();
+    console.log('reducedMotion:', reducedMotion);
 
     const visited = localStorage.getItem('zettel-visited');
     const lastNote = localStorage.getItem('zettel-last-note');
 
     if (!visited) {
-      introFirstVisit = true;
       setTheme('dark');
       showSplash();
     } else if (lastNote) {
