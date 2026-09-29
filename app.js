@@ -241,25 +241,22 @@
 
   window.addEventListener('scroll', updateReadingProgress, { passive: true });
 
-  /* ---------- Splash screen & сценарное вступление ---------- */
-  const INTRO_QUOTE = 'Времени не существует…';
+  /* ---------- Splash screen & вступление «тихое растворение» ---------- */
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let introActive = false;
-  let introFinished = false;
-  let introSkipped = false;
-  let introRouted = false;
-  let introTimers = [];
+  let quietActive = false;
+  let quietRouted = false;
+  let quietTimers = [];
   let splashHintTimer = null;
 
-  function introLater(fn, ms) {
+  function quietLater(fn, ms) {
     const id = setTimeout(fn, ms);
-    introTimers.push(id);
+    quietTimers.push(id);
     return id;
   }
 
-  function clearIntroTimers() {
-    introTimers.forEach(clearTimeout);
-    introTimers = [];
+  function clearQuietTimers() {
+    quietTimers.forEach(clearTimeout);
+    quietTimers = [];
   }
 
   function isSplashVisible() {
@@ -271,8 +268,8 @@
     if (!splash) return;
     clearTimeout(splashHintTimer);
     splash.classList.remove('hiding');
-    splash.classList.remove('opening');
     splash.dataset.hiding = '';
+    splash.style.transition = '';
     splash.style.opacity = '1';
     splash.style.display = 'none';
     const hint = splash.querySelector('.splash-hint');
@@ -281,15 +278,16 @@
 
   function showSplash() {
     if (!splash) return;
-    // Сброс состояния: вступление может проигрываться при каждом показе обложки
-    clearIntroTimers();
-    introActive = false;
-    introFinished = false;
-    introSkipped = false;
-    introRouted = false;
+    // Сброс состояния: вступление играет при каждом показе обложки
+    clearQuietTimers();
+    quietActive = false;
+    quietRouted = false;
+    document.body.classList.remove('quiet-intro', 'quiet-quote', 'quiet-header', 'quiet-items');
+    container.querySelectorAll('.toc-item').forEach(item => {
+      item.style.transitionDelay = '';
+    });
 
     splash.classList.remove('hiding');
-    splash.classList.remove('opening');
     splash.dataset.hiding = '';
     splash.style.transition = 'opacity 600ms ease';
     splash.style.opacity = '1';
@@ -298,7 +296,7 @@
     // Акт 0: подсказка «раскрыть» проявляется спустя ~1.2с
     clearTimeout(splashHintTimer);
     splashHintTimer = setTimeout(() => {
-      if (!introActive && isSplashVisible()) {
+      if (!quietActive && isSplashVisible()) {
         const hint = splash.querySelector('.splash-hint');
         if (hint) hint.classList.add('visible');
       }
@@ -321,265 +319,97 @@
     }, 600);
   }
 
-  /* Зерно бумаги: монохромное, почти незримое */
-  function makeGrain(el) {
-    const size = 128;
-    const cv = document.createElement('canvas');
-    cv.width = size;
-    cv.height = size;
-    const ctx = cv.getContext('2d');
-    const img = ctx.createImageData(size, size);
-    for (let i = 0; i < img.data.length; i += 4) {
-      const v = 30 + Math.random() * 40;
-      img.data[i] = v;
-      img.data[i + 1] = v * 0.9;
-      img.data[i + 2] = v * 0.75;
-      img.data[i + 3] = Math.random() * 255;
-    }
-    ctx.putImageData(img, 0, 0);
-    el.style.backgroundImage = `url(${cv.toDataURL()})`;
-  }
-
-  /* Акт 1. Раскрытие */
-  function startIntro() {
-    if (introActive || introFinished) return;
-    introActive = true;
+  /* Акт 1: обложка тает, под ней оглавление проявляется по очереди */
+  function startQuiet() {
+    if (quietActive) return;
+    quietActive = true;
     clearTimeout(splashHintTimer);
 
-    const stage = document.createElement('div');
-    stage.id = 'intro-stage';
-    stage.innerHTML = `
-      <div class="intro-bg"></div>
-      <div class="intro-sheet">
-        <div class="intro-grain"></div>
-        <div class="intro-stamp">Цеттель</div>
-        <div class="intro-author">Итеревский-Кочетов</div>
-      </div>
-      <div class="intro-line"></div>
-    `;
-    document.body.appendChild(stage);
-    makeGrain(stage.querySelector('.intro-grain'));
-    document.body.style.overflow = 'hidden';
-
-    void stage.offsetWidth; // reflow: далее классы дают переходы
-    splash.classList.add('opening');
-    introLater(() => stage.classList.add('sheet-in'), 150);
-
-    introLater(() => {
-      splash.style.display = 'none';
-    }, 1000);
-
-    // Акт 2 после появления листа и паузы ~0.4с
-    introLater(runTyping, 1000 + 400);
-
-    // Гарантированное завершение сцены
-    introLater(() => finishIntro(true), 15000);
-  }
-
-  /* Акт 2. Строка пишется побуквенно, по-человечески неравномерно */
-  function runTyping() {
-    const line = document.querySelector('#intro-stage .intro-line');
-    if (!line) return;
-
-    const spans = Array.from(INTRO_QUOTE).map(ch => {
-      const s = document.createElement('span');
-      s.textContent = ch;
-      line.appendChild(s);
-      return s;
-    });
-
-    let t = 0;
-    spans.forEach((s, i) => {
-      const ch = INTRO_QUOTE[i];
-      let delay = 45 + Math.random() * 25 + (Math.random() * 40 - 20);
-      if (i > 0 && /[А-ЯЁA-Z]/.test(ch)) delay += 260; // пауза перед заглавной
-      if (ch === '…') delay += 420;                    // пауза перед многоточием
-      t += Math.max(30, delay);
-      introLater(() => s.classList.add('on'), t);
-    });
-
-    introLater(runStamp, t + 500);
-  }
-
-  /* Акт 3. Штамп */
-  function runStamp() {
-    const sheet = document.querySelector('#intro-stage .intro-sheet');
-    if (!sheet) return;
-    sheet.classList.add('stamped');
-    introLater(() => {
-      const author = document.querySelector('#intro-stage .intro-author');
-      if (author) author.classList.add('on');
-    }, 250);
-    introLater(settleIntro, 250 + 800);
-  }
-
-  /* Акт 4. Оседание: строка уплывает к месту цитаты и отпечатывается */
-  function settleIntro() {
-    const stage = document.getElementById('intro-stage');
-    const line = stage ? stage.querySelector('.intro-line') : null;
-    if (!stage || !line) {
-      finishIntro(true);
-      return;
-    }
-
-    splash.style.display = 'none';
-    document.body.classList.add('intro-settling');
+    // Оглавление рендерится под обложкой, элементы скрыты служебным классом
+    document.body.classList.add('quiet-intro');
     handleRoute();
-    introRouted = true;
+    quietRouted = true;
 
-    const quote = document.querySelector('.site-quote');
-    if (quote) {
-      const lineRect = line.getBoundingClientRect();
-      const targetRect = quote.getBoundingClientRect();
-      const dx = targetRect.left + targetRect.width / 2 - (lineRect.left + lineRect.width / 2);
-      const dy = targetRect.top + targetRect.height / 2 - (lineRect.top + lineRect.height / 2);
-      const scale = parseFloat(getComputedStyle(quote).fontSize)
-        / parseFloat(getComputedStyle(line).fontSize);
-      line.style.transform =
-        `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) scale(${scale})`;
-    }
+    splash.style.transition = 'opacity 2.5s ease-in-out';
+    splash.style.opacity = '0';
 
-    stage.classList.add('settling');
+    // Акт 2: строгая очередь — цитата, шапка, пункты оглавления
+    quietLater(() => document.body.classList.add('quiet-quote'), 250);
+    quietLater(() => document.body.classList.add('quiet-header'), 1050);
+    quietLater(revealTocItems, 1850);
 
-    // Кроссфейд: рукопись растворяется, проявляется книжный шрифт
-    introLater(() => {
-      line.classList.add('fade');
-      document.body.classList.add('intro-quote-in');
-    }, 900);
-
-    // Оглавление проявляется пункт за пунктом (renderContent отработает ~300мс)
-    introLater(staggerToc, 380);
-
-    introLater(() => finishIntro(false), 1700);
+    // Страховочный таймер
+    quietLater(() => finishQuiet(false), 12000);
   }
 
-  function staggerToc() {
+  function revealTocItems() {
     const items = container.querySelectorAll('.toc-item');
-    if (!items.length) return;
     items.forEach((item, i) => {
-      item.classList.add('intro-item');
-      item.style.transitionDelay = (i * 65) + 'ms';
+      item.style.transitionDelay = (i * 120) + 'ms';
     });
-    // Таймер вместо rAF: надёжно срабатывает и в фоновых вкладках
-    setTimeout(() => {
-      items.forEach(item => item.classList.add('in'));
-    }, 40);
-    // Обычный таймер: переживает finishIntro и убирает служебные классы
-    setTimeout(() => {
-      items.forEach(item => {
-        item.classList.remove('intro-item', 'in');
-        item.style.transitionDelay = '';
-      });
-    }, items.length * 65 + 800);
+    document.body.classList.add('quiet-items');
+    quietLater(() => finishQuiet(false), items.length * 120 + 1200);
   }
 
-  /* Пропуск: текущий акт доводится до конца ускоренно, затем оседание */
-  function skipIntro() {
-    if (introSkipped || introFinished) return;
-    introSkipped = true;
-    clearIntroTimers();
-
-    const stage = document.getElementById('intro-stage');
-    if (!stage) {
-      finishIntro(true);
-      return;
-    }
-    stage.classList.add('fast');
-    stage.classList.add('sheet-in');
-    splash.style.display = 'none';
-
-    const line = stage.querySelector('.intro-line');
-    if (line && !line.children.length) {
-      Array.from(INTRO_QUOTE).forEach(ch => {
-        const s = document.createElement('span');
-        s.textContent = ch;
-        line.appendChild(s);
-      });
-    }
-    if (line) {
-      line.querySelectorAll('span').forEach(s => s.classList.add('on'));
-    }
-    const sheet = stage.querySelector('.intro-sheet');
-    if (sheet) sheet.classList.add('stamped');
-    const author = stage.querySelector('.intro-author');
-    if (author) author.classList.add('on');
-
-    introLater(settleIntro, 400);
-  }
-
-  function finishIntro(instant) {
-    if (introFinished) return;
-    introFinished = true;
-    introActive = false;
-    clearIntroTimers();
+  /* Акт 3 / пропуск: страница в обычном состоянии */
+  function finishQuiet(instant) {
+    clearQuietTimers();
     clearTimeout(splashHintTimer);
+    quietActive = false;
 
-    const stage = document.getElementById('intro-stage');
-    if (stage) stage.remove();
+    document.body.classList.remove('quiet-intro', 'quiet-quote', 'quiet-header', 'quiet-items');
+    container.querySelectorAll('.toc-item').forEach(item => {
+      item.style.transitionDelay = '';
+    });
 
     if (splash) {
-      splash.classList.remove('opening');
       splash.classList.remove('hiding');
+      splash.dataset.hiding = '';
       splash.style.display = 'none';
-    }
-    document.body.style.overflow = '';
-    document.body.classList.remove('intro-settling', 'intro-quote-in');
-
-    // Страховка: убрать служебные классы оглавления при мгновенном завершении
-    if (instant) {
-      container.querySelectorAll('.toc-item.intro-item').forEach(item => {
-        item.classList.remove('intro-item', 'in');
-        item.style.transitionDelay = '';
-      });
+      splash.style.transition = '';
+      splash.style.opacity = '1';
     }
 
     localStorage.setItem('zettel-visited', 'true');
-    if (!introRouted) {
-      introRouted = true;
+    if (!quietRouted) {
+      quietRouted = true;
       handleRoute();
     }
   }
 
   document.addEventListener('click', e => {
-    if (introFinished) return;
-    if (introActive) {
-      skipIntro();
+    // Пропуск: повторный клик в любой момент сцены — мгновенное оглавление
+    if (quietActive) {
+      finishQuiet(true);
       return;
     }
     if (!isSplashVisible()) return;
     if (splash.contains(e.target)) {
       if (reducedMotion) {
-        finishIntro(true);
+        finishQuiet(true);
       } else {
-        startIntro();
+        startQuiet();
       }
-    }
-  });
-
-  document.addEventListener('dblclick', () => {
-    if (introFinished) return;
-    if (introActive || isSplashVisible()) {
-      finishIntro(true);
     }
   });
 
   document.addEventListener('keydown', e => {
-    if (introFinished || introActive) return;
+    if (quietActive) return;
     if (!isSplashVisible()) return;
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       if (reducedMotion) {
-        finishIntro(true);
+        finishQuiet(true);
       } else {
-        startIntro();
+        startQuiet();
       }
     }
   });
 
-  // При сворачивании вкладки сцена корректно завершается на оглавлении
+  // При сворачивании вкладки сцена мгновенно завершается на оглавлении
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && introActive && !introFinished) {
-      finishIntro(true);
+    if (document.hidden && quietActive) {
+      finishQuiet(true);
     }
   });
 

@@ -751,189 +751,34 @@ button {
   50% { opacity: 0.6; }
 }
 
-/* Акт 1: обложка уходит вверх, теряя насыщенность */
-#splash img {
-  transition: none;
-}
-
-#splash .splash-content {
-  transition: opacity 0.45s ease;
-}
-
-#splash.opening img {
-  transform: translateY(-102%);
-  filter: saturate(0.3) brightness(0.55);
-  transition: transform 0.95s cubic-bezier(0.22, 1, 0.36, 1),
-    filter 0.95s ease;
-}
-
-#splash.opening .splash-content,
-#splash.opening .splash-hint {
+/* === Вступление «тихое растворение»: только opacity === */
+body.quiet-intro .quote-wrapper {
   opacity: 0;
-  animation: none;
+  transition: opacity 1.2s ease-in-out;
 }
 
-/* === Сценарное вступление: лист, строка, штамп === */
-#intro-stage {
-  position: fixed;
-  inset: 0;
-  z-index: 9990;
-}
-
-#intro-stage .intro-bg {
-  position: absolute;
-  inset: 0;
-  background: #12100e;
-  transition: opacity 1.2s ease;
-}
-
-#intro-stage.settling .intro-bg {
-  opacity: 0;
-}
-
-.intro-sheet {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 86vw;
-  height: 72vh;
-  transform: translate(-50%, -50%) scale(0.985);
-  background: #f7f5f0;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.45);
-  opacity: 0;
-  transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-#intro-stage.sheet-in .intro-sheet {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-}
-
-#intro-stage.settling .intro-sheet {
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(1.01);
-  transition: opacity 1.1s ease, transform 1.1s ease;
-}
-
-.intro-grain {
-  position: absolute;
-  inset: 0;
-  opacity: 0.05;
-  pointer-events: none;
-}
-
-.intro-line {
-  position: absolute;
-  left: 50%;
-  top: 44%;
-  transform: translate(-50%, -50%);
-  width: 76vw;
-  max-width: 640px;
-  text-align: center;
-  font-family: 'Caveat', cursive;
-  font-size: clamp(1.35rem, 4.5vw, 1.85rem);
-  line-height: 1.4;
-  color: #2a241e;
-  white-space: pre-wrap;
-  z-index: 2;
-  transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1),
-    opacity 0.45s ease;
-}
-
-.intro-line span {
-  opacity: 0;
-  transition: opacity 0.12s linear;
-}
-
-.intro-line span.on {
+body.quiet-intro.quiet-quote .quote-wrapper {
   opacity: 1;
 }
 
-.intro-line.fade {
+body.quiet-intro .site-header {
   opacity: 0;
+  transition: opacity 0.9s ease-in-out;
 }
 
-.intro-stamp {
-  position: absolute;
-  left: 50%;
-  top: 55%;
-  transform: translate(-50%, -50%) scale(1.15);
-  font-family: 'Old Standard TT', serif;
-  font-size: clamp(1.8rem, 6vw, 2.6rem);
-  color: #c45c3e;
-  opacity: 0;
-}
-
-.intro-sheet.stamped .intro-stamp {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-  transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity 0.18s ease;
-}
-
-.intro-sheet.stamped {
-  animation: sheetThud 0.15s ease;
-}
-
-@keyframes sheetThud {
-  0% { margin-top: 0; }
-  40% { margin-top: 1px; }
-  100% { margin-top: 0; }
-}
-
-.intro-author {
-  position: absolute;
-  left: 50%;
-  top: 63%;
-  transform: translate(-50%, -50%);
-  font-family: 'Caveat', cursive;
-  font-size: 1.2rem;
-  color: #c45c3e;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-}
-
-.intro-author.on {
+body.quiet-intro.quiet-header .site-header {
   opacity: 1;
 }
 
-/* Ускоренный пропуск акта */
-#intro-stage.fast .intro-sheet,
-#intro-stage.fast .intro-line,
-#intro-stage.fast .intro-author,
-#intro-stage.fast .intro-stamp,
-#intro-stage.fast .intro-line span {
-  transition-duration: 0.25s !important;
-}
-
-#intro-stage.fast .intro-sheet.stamped {
-  animation-duration: 0.12s;
-}
-
-/* Оседание: штатная цитата ждёт кроссфейда */
-body.intro-settling .site-quote {
-  animation: none;
+body.quiet-intro .toc-item {
   opacity: 0;
-  transition: opacity 0.5s ease;
+  transition: opacity 0.7s ease-in-out;
 }
 
-body.intro-settling.intro-quote-in .site-quote {
+body.quiet-intro.quiet-items .toc-item {
   opacity: 1;
 }
 
-/* Оглавление: поочередное проявление пунктов */
-.toc-item.intro-item {
-  opacity: 0;
-  transform: translateY(6px);
-  transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.toc-item.intro-item.in {
-  opacity: 1;
-  transform: translateY(0);
-}
 
 @media (prefers-reduced-motion: reduce) {
   .splash-hint.visible {
