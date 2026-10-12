@@ -1292,3 +1292,159 @@ body[data-theme="dark"] #icon-sun {
     height: 1.0rem;
   }
 }
+
+/* === ПОДЕЛИТЬСЯ ЦИТАТОЙ: ПЛАВАЮЩАЯ КНОПКА У ВЫДЕЛЕНИЯ === */
+.share-fab-wrap {
+  position: fixed;
+  /* top/left выставляет JS по координатам выделения */
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-direction: row-reverse; /* круг справа, подпись слева */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.share-fab {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #f7f5f0;
+  border: 1px solid rgba(60, 48, 36, 0.35);
+  color: #4a4036;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  box-shadow: 0 2px 10px rgba(60, 48, 36, 0.18);
+}
+
+.share-fab-label {
+  background: #f7f5f0;
+  border: 1px solid rgba(60, 48, 36, 0.25);
+  color: #4a4036;
+  font-family: 'Old Standard TT', serif;
+  font-size: 0.85rem;
+  padding: 6px 12px;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 2px 10px rgba(60, 48, 36, 0.12);
+}
+
+.share-fab:hover { border-color: #c47f2a; color: #c47f2a; }
+.share-fab-label:hover { color: #c47f2a; border-color: #c47f2a; }
+
+/* тёмная тема */
+body[data-theme="dark"] .share-fab,
+body[data-theme="dark"] .share-fab-label {
+  background: #211a14;
+  border-color: rgba(232, 163, 77, 0.4);
+  color: #b8ab9c;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+body[data-theme="dark"] .share-fab:hover,
+body[data-theme="dark"] .share-fab-label:hover {
+  border-color: #e8a34d;
+  color: #e8a34d;
+}
+
+/* быстрое появление */
+@keyframes share-fab-in {
+  0%   { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.share-fab-wrap.share-fab-in { animation: share-fab-in 0.25s ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .share-fab-wrap.share-fab-in { animation: none; }
+}
+
+/* === КОЛОФОН ОГЛАВЛЕНИЯ === */
+.toc-colophon {
+  margin: 3rem auto 2rem;
+  text-align: center;
+  font-family: 'Caveat', cursive;
+  font-size: 1.35rem;
+  color: #8a7d6c;
+}
+
+.toc-colophon a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(138, 125, 108, 0.35);
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.toc-colophon a:hover { color: #c47f2a; border-color: #c47f2a; }
+.toc-colophon .colophon-sep { margin: 0 0.6em; opacity: 0.5; }
+body[data-theme="dark"] .toc-colophon { color: #7d7264; }
+
+/* === МЕТКА «НОВОЕ» В ОГЛАВЛЕНИИ === */
+.toc-item.toc-new .toc-number::after {
+  content: '· новое';
+  font-family: 'Caveat', cursive;
+  font-size: 1.1rem;
+  color: #c47f2a;
+  margin-left: 0.4em;
+}
+
+/* === РОТАЦИЯ ЦИТАТЫ НА ГЛАВНОЙ === */
+.site-quote .quote-rotated {
+  transition: opacity 0.3s ease;
+}
+
+.site-quote.quote-fading .quote-rotated {
+  opacity: 0;
+}
+
+.site-quote.quote-link {
+  cursor: pointer;
+}
+
+.site-quote.quote-link .quote-rotated {
+  border-bottom: 1px dotted transparent;
+  transition: opacity 0.3s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.site-quote.quote-link:hover .quote-rotated {
+  border-bottom-color: var(--quote);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-quote .quote-rotated,
+  .site-quote.quote-link .quote-rotated {
+    transition: none;
+  }
+}
+
+/* === ПЕЧАТЬ ЗАМЕТКИ === */
+@media print {
+  .site-header, .site-nav, .quote-wrapper, .search-panel,
+  .note-nav, .note-share, #reader-sheet, #reader-backdrop,
+  .share-fab-wrap, #lightbox, #splash, #pull-hint, #dim-overlay {
+    display: none !important;
+  }
+  body { background: #fff !important; color: #000 !important; }
+  .note-page { max-width: 100%; padding: 0; }
+  .note-body { font-size: 12pt; line-height: 1.6; }
+  .note-number, .note-date { color: #000 !important; }
+  .note-tags, .note-links, .note-backlinks { font-size: 10pt; color: #444 !important; }
+  a { color: #000 !important; text-decoration: none !important; }
+  .note-page::after {
+    content: 'Цеттель · iterevsky.github.io/zettel';
+    display: block;
+    margin-top: 2em;
+    font-size: 10pt;
+    color: #888;
+    text-align: center;
+  }
+}

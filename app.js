@@ -27,6 +27,9 @@
   // Дебаунс сохранения прогресса чтения
   let readSaveTimer = null;
 
+  // Метка «новое»: дата прошлого визита (читается в boot до перезаписи)
+  let prevVisitDate = null;
+
   /* ---------- DOM ---------- */
   const container = document.getElementById('main-container');
   const searchPanel = document.getElementById('search-panel');
@@ -98,6 +101,11 @@
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+  }
+
+  function parseDateRu(str) {
+    const parts = str.split('.');
+    return new Date(+parts[2], +parts[1] - 1, +parts[0]);
   }
 
   /* ---------- Тема ---------- */
@@ -240,6 +248,22 @@
   }
 
   window.addEventListener('scroll', updateReadingProgress, { passive: true });
+
+  /* === SERVICE WORKER: офлайн === */
+  if ('serviceWorker' in navigator) {
+    /* когда активировался новый service worker — перезагрузить страницу один раз,
+       чтобы читатель сразу получил свежие файлы */
+    let swReloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (swReloaded) return;
+      swReloaded = true;
+      location.reload();
+    });
+
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
 
   /* ---------- Splash screen & вступление «тихое растворение» ---------- */
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -450,6 +474,46 @@
     });
   }
 
+  /* ---------- Ротация цитаты на главной ---------- */
+  function rotateQuote() {
+    if (typeof QUOTES === 'undefined' || !QUOTES.length) return;
+    const quoteEl = document.querySelector('.site-quote');
+    if (!quoteEl) return;
+
+    const apply = () => {
+      let idx = Math.floor(Math.random() * QUOTES.length);
+      const prev = parseInt(quoteEl.dataset.qi !== undefined && quoteEl.dataset.qi !== ''
+        ? quoteEl.dataset.qi : localStorage.getItem('zettel-last-quote') || '-1', 10);
+      if (QUOTES.length > 1 && idx === prev) idx = (idx + 1) % QUOTES.length;
+      const q = QUOTES[idx];
+      if (!q || !findNote(q.id)) return;
+      quoteEl.dataset.qi = String(idx);
+      localStorage.setItem('zettel-last-quote', String(idx));
+      quoteEl.innerHTML = '<span class="quote-rotated">' + escapeHtml(q.text) + '</span>';
+      quoteEl.classList.add('quote-link');
+    };
+
+    if (quoteEl.querySelector('.quote-rotated')) {
+      quoteEl.classList.add('quote-fading');
+      setTimeout(() => {
+        apply();
+        quoteEl.classList.remove('quote-fading');
+      }, reducedMotion ? 0 : 300);
+    } else {
+      apply();
+    }
+
+    if (!quoteEl.dataset.rotBound) {
+      quoteEl.dataset.rotBound = '1';
+      quoteEl.addEventListener('click', () => {
+        const q = QUOTES[parseInt(quoteEl.dataset.qi, 10)];
+        if (q && findNote(q.id)) {
+          window.location.hash = '#' + q.id;
+        }
+      });
+    }
+  }
+
   /* ---------- Оглавление ---------- */
   function renderIndex(filterTag, searchQuery, filterDate) {
     currentNoteId = null;
@@ -502,12 +566,13 @@
 
         const frac = readMap[note.id] || 0;
         const isRead = frac >= READ_THRESHOLD;
+        const isNew = prevVisitDate && parseDateRu(note.date) > prevVisitDate;
         const readLine = !isRead && frac > 0 && note.id === lastNoteId
           ? `<span class="toc-read-line" style="width:${Math.round(frac * 100)}%"></span>`
           : '';
 
         html += `
-          <li class="toc-item${isRead ? ' read' : ''}" data-id="${note.id}">
+          <li class="toc-item${isRead ? ' read' : ''}${isNew ? ' toc-new' : ''}" data-id="${note.id}">
             <span class="toc-number">${note.id}</span>
             <span class="toc-date">${note.date}</span>
             <span class="toc-preview">${escapeHtml(getPreview(note.content, 100))}</span>
@@ -517,10 +582,19 @@
         `;
       });
       html += '</ul>';
+      html += '<footer class="toc-colophon">' +
+        '<a href="https://iterevsky.github.io/echo" target="_blank" rel="noopener">ЭХО — книга автора</a>' +
+        '<span class="colophon-sep">·</span>' +
+        '<a href="https://t.me/iterevsky" target="_blank" rel="noopener">Канал в Telegram</a>' +
+        '</footer>';
     }
 
     html += '</div>';
     renderContent(html);
+
+    if (!filterTag && !searchQuery && !filterDate) {
+      rotateQuote();
+    }
   }
 
   /* ---------- Заметка ---------- */
@@ -535,6 +609,7 @@
     saveLastNote(id);
     updateActiveNav('note');
     quoteWrapper.classList.add('hidden');
+    requestNoteWakeLock();
 
     const body = processContent(note.content);
 
@@ -840,6 +915,32 @@
     document.body.removeChild(ta);
   }
 
+  /* ---------- Экран не гаснет во время чтения ---------- */
+  let noteWakeLock = null;
+
+  async function requestNoteWakeLock() {
+    if (!('wakeLock' in navigator)) return;
+    try {
+      noteWakeLock = await navigator.wakeLock.request('screen');
+      noteWakeLock.addEventListener('release', () => { noteWakeLock = null; });
+    } catch (err) {}
+  }
+
+  function releaseNoteWakeLock() {
+    if (noteWakeLock) {
+      noteWakeLock.release().catch(() => {});
+      noteWakeLock = null;
+    }
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      if (currentNoteId) requestNoteWakeLock();
+    } else {
+      releaseNoteWakeLock();
+    }
+  });
+
   /* ---------- Динамические события ---------- */
   function bindDynamicEvents() {
     document.querySelectorAll('.toc-item').forEach(item => {
@@ -900,6 +1001,10 @@
   /* ---------- Роутинг ---------- */
   function handleRoute() {
     const path = parseHash();
+
+    if (!/^Z-\d{3}$/.test(path)) {
+      releaseNoteWakeLock();
+    }
 
     if (path === '' || path === '/') {
       renderIndex();
@@ -1141,6 +1246,14 @@
     const visited = localStorage.getItem('zettel-visited');
     const lastNote = localStorage.getItem('zettel-last-note');
 
+    // Метки «новое» относительно прошлого визита: сначала читаем, потом пишем
+    const prevRaw = localStorage.getItem('zettel-prev-visit');
+    if (prevRaw) {
+      const d = new Date(prevRaw);
+      if (!isNaN(d)) prevVisitDate = d;
+    }
+    localStorage.setItem('zettel-prev-visit', new Date().toISOString());
+
     if (!visited) {
       setTheme('dark');
       showSplash();
@@ -1152,6 +1265,261 @@
       handleRoute();
     }
   }
+
+  /* ============================================================
+     ПОДЕЛИТЬСЯ ЦИТАТОЙ: плавающая кнопка у выделения -> canvas 1200x630
+     ============================================================ */
+  (function shareQuote() {
+    let fab = null;
+    let selTimer = null;
+    let sharing = false;
+
+    const FAB_ICON = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/></svg>';
+
+    function getQuote() {
+      const sel = window.getSelection();
+      if (!sel || sel.isCollapsed || !sel.rangeCount) return null;
+      const text = sel.toString().replace(/\s+/g, ' ').trim();
+      if (text.length < 12 || text.length > 600) return null;
+      const node = sel.anchorNode;
+      const el = node && (node.nodeType === 3 ? node.parentElement : node);
+      if (!el || !el.closest('.note-body')) return null;
+      return { text };
+    }
+
+    function hideFab() {
+      if (fab) { fab.remove(); fab = null; }
+    }
+
+    function positionFab() {
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      const rects = sel.getRangeAt(0).getClientRects();
+      if (!rects.length) return;
+      const first = rects[0];
+      const last = rects[rects.length - 1];
+
+      fab.style.visibility = 'hidden';
+      fab.style.top = '0px';
+      fab.style.left = '0px';
+      const w = fab.offsetWidth;
+      const h = fab.offsetHeight;
+      fab.style.visibility = '';
+
+      const gap = 10;
+      const reserveBottom = 120; /* системная карточка браузера внизу экрана */
+      let top = last.bottom + gap;
+      if (top + h > window.innerHeight - reserveBottom) {
+        top = first.top - h - gap; /* нет места снизу — над выделением */
+      }
+      if (top < 8) top = 8;
+
+      let left = last.right - 48; /* круг 48px прижат к правому краю выделения */
+      left = Math.min(left, window.innerWidth - w - 8);
+      left = Math.max(left, 8);
+
+      fab.style.top = top + 'px';
+      fab.style.left = left + 'px';
+    }
+
+    function showFab() {
+      if (!fab) {
+        fab = document.createElement('div');
+        fab.className = 'share-fab-wrap share-fab-in';
+        fab.setAttribute('role', 'group');
+        fab.setAttribute('aria-label', 'Поделиться цитатой');
+        fab.innerHTML = '<span class="share-fab-label">Поделиться</span>' +
+          '<button type="button" class="share-fab">' + FAB_ICON + '</button>';
+        /* тап не сбрасывает выделение до генерации карточки;
+           preventDefault на touchstart гасит синтезированный click,
+           поэтому на тач-устройствах действие вызываем из touchend */
+        fab.addEventListener('mousedown', (e) => e.preventDefault());
+        fab.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+        fab.addEventListener('touchend', (e) => { e.preventDefault(); share(); }, { passive: false });
+        fab.addEventListener('click', share);
+        document.body.appendChild(fab);
+      }
+      positionFab();
+    }
+
+    /* --- карточка «Окно»: фон — кроп обложки cover.jpg, скрим + виньетка, минимум типографики --- */
+    /* Кроп из cover.jpg (848x1264): окно с закатным видом. Соотношение 740x394 ~= 1200x630. */
+    const COVER_CROP = { sx: 60, sy: 300, sw: 740, sh: 394 };
+    let coverImg = null;
+    function loadCover() {
+      return new Promise((res) => {
+        if (coverImg) { res(coverImg); return; }
+        const img = new Image();
+        img.onload = () => { coverImg = img; res(img); };
+        img.onerror = () => res(null); /* офлайн без кэша — сработает тёмный фолбэк ниже */
+        img.src = 'assets/images/cover.jpg';
+      });
+    }
+
+    function renderCard(quote, note) {
+      return loadCover().then((img) => new Promise((resolve) => {
+        const W = 1200, H = 630;
+        const cv = document.createElement('canvas');
+        cv.width = W; cv.height = H;
+        const ctx = cv.getContext('2d');
+        ctx.textBaseline = 'top';
+
+        function tracked(text, x, y, font, color, tr, alignRight) {
+          ctx.font = font;
+          ctx.fillStyle = color;
+          const chars = [...text];
+          const widths = chars.map((ch) => ctx.measureText(ch).width);
+          const total = widths.reduce((a, b) => a + b, 0) + tr * (chars.length - 1);
+          let cx = alignRight ? x - total : x;
+          chars.forEach((ch, i) => { ctx.fillText(ch, cx, y); cx += widths[i] + tr; });
+          return total;
+        }
+
+        /* фон: кроп обложки на всю карточку (фолбэк — тёплый тёмный градиент) */
+        if (img) {
+          ctx.drawImage(img, COVER_CROP.sx, COVER_CROP.sy, COVER_CROP.sw, COVER_CROP.sh, 0, 0, W, H);
+        } else {
+          const fb = ctx.createLinearGradient(0, 0, 0, H);
+          fb.addColorStop(0, '#1a1410');
+          fb.addColorStop(1, '#120d0a');
+          ctx.fillStyle = fb;
+          ctx.fillRect(0, 0, W, H);
+        }
+
+        /* затемнение: вертикальный скрим, сильнее к низу (под текст и колофон) */
+        const scrim = ctx.createLinearGradient(0, 0, 0, H);
+        scrim.addColorStop(0, 'rgba(10,7,5,0.36)');
+        scrim.addColorStop(1, 'rgba(10,7,5,0.70)');
+        ctx.fillStyle = scrim;
+        ctx.fillRect(0, 0, W, H);
+
+        /* виньетка по краям */
+        const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, W * 0.62);
+        vig.addColorStop(0, 'rgba(0,0,0,0)');
+        vig.addColorStop(1, 'rgba(0,0,0,0.42)');
+        ctx.fillStyle = vig;
+        ctx.fillRect(0, 0, W, H);
+
+        /* шапка: янтарная риска + ЦЕТТЕЛЬ с разрядкой + номер заметки справа */
+        ctx.fillStyle = '#e8a34d';
+        ctx.fillRect(72, 64, 40, 3);
+        tracked('ЦЕТТЕЛЬ', 128, 56, '19px "Old Standard TT", serif', '#e8decc', 7);
+        tracked(note.id, W - 72, 56, '19px "Old Standard TT", serif', '#c4b8a4', 5, true);
+
+        /* цитата: слева от x=130, адаптивный размер, максимум 4 строки с многоточием */
+        function wrapAt(px) {
+          ctx.font = px + 'px "Old Standard TT", serif';
+          const lines = [];
+          let line = '';
+          quote.split(' ').forEach((w) => {
+            const t = line ? line + ' ' + w : w;
+            if (ctx.measureText(t).width > W - 260 && line) { lines.push(line); line = w; }
+            else line = t;
+          });
+          if (line) lines.push(line);
+          return lines;
+        }
+        let size = 50, lh = 66, y0 = 210;
+        let lines = wrapAt(size);
+        if (lines.length > 3) { size = 44; lh = 58; y0 = 200; lines = wrapAt(size); }
+        if (lines.length > 4) {
+          lines = lines.slice(0, 4);
+          let lastLine = lines[3];
+          while (lastLine.length && ctx.measureText(lastLine + ' …').width > W - 260) {
+            lastLine = lastLine.slice(0, -1);
+          }
+          lines[3] = lastLine.trim() + ' …';
+        }
+        ctx.fillStyle = '#eee6d8';
+        lines.forEach((l, i) => ctx.fillText(l, 130, y0 + i * lh));
+
+        /* колофон: hairline, дата слева, рукописная подпись справа */
+        ctx.fillStyle = '#6e6456';
+        ctx.fillRect(72, H - 64, W - 144, 1);
+        ctx.font = '17px "Old Standard TT", serif';
+        ctx.fillStyle = '#b0a08c';
+        ctx.fillText(note.date, 72, H - 50);
+        ctx.font = '34px "Caveat", cursive';
+        ctx.fillStyle = '#d6c4a8';
+        const sig = 'Итеревский-Кочетов';
+        ctx.fillText(sig, W - 72 - ctx.measureText(sig).width, H - 60);
+
+        /* зерно */
+        for (let i = 0; i < 2600; i++) {
+          ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.05)';
+          ctx.fillRect(Math.random() * W, Math.random() * H, 1, 1);
+        }
+
+        cv.toBlob((blob) => resolve(blob), 'image/png');
+      }));
+    }
+
+    function noteLink(note) {
+      return 'https://iterevsky.github.io/zettel/#' + note.id;
+    }
+
+    function shareCaption(text, note) {
+      let teaser = text;
+      if (teaser.length > 140) {
+        teaser = teaser.slice(0, 140);
+        teaser = teaser.slice(0, teaser.lastIndexOf(' ')) + '…';
+      }
+      return '«' + teaser + '»\n— Цеттель, ' + note.id + '. Читать: ' + noteLink(note);
+    }
+
+    async function share() {
+      if (sharing) return;
+      const q = getQuote();
+      hideFab();
+      if (!q) return;
+      const note = findNote(currentNoteId);
+      if (!note) return;
+      sharing = true;
+      try {
+        await document.fonts.ready; /* шрифты карточки точно загружены */
+        const blob = await renderCard(q.text, note);
+        const file = new File([blob], 'zettel-quote.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], text: shareCaption(q.text, note), title: 'Цеттель' });
+          } catch (err) {
+            if (err && err.name === 'AbortError') throw err; /* пользователь отменил — молчим */
+            await navigator.share({ files: [file], title: 'Цеттель' }); /* комбо не поддержано — только файл */
+          }
+        } else {
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'zettel-quote.png';
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+          try { await navigator.clipboard.writeText(shareCaption(q.text, note)); } catch (e) {}
+        }
+      } catch (err) {}
+      sharing = false;
+    }
+
+    document.addEventListener('selectionchange', () => {
+      clearTimeout(selTimer);
+      selTimer = setTimeout(() => {
+        if (!currentNoteId) { hideFab(); return; }
+        const q = getQuote();
+        if (q) showFab(); else hideFab();
+      }, 350);
+    });
+
+    window.addEventListener('scroll', hideFab, { passive: true });
+    window.addEventListener('resize', hideFab);
+    window.addEventListener('hashchange', hideFab);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hideFab(); });
+
+    /* открытие поиска, лайтбокса или настроек чтения прячет кнопку */
+    document.addEventListener('click', (e) => {
+      if (!fab) return;
+      if (e.target.closest('.search-toggle, .search-panel, .photo-link, #lightbox, .aa-toggle, #reader-sheet, #reader-backdrop, #theme-toggle')) {
+        hideFab();
+      }
+    }, true);
+  })();
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);
