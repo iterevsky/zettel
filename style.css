@@ -1391,7 +1391,8 @@ body[data-theme="dark"] .toc-colophon { color: #7d7264; }
 
 @media (max-width: 768px) {
   .toc-colophon {
-    margin-left: auto; /* прижать вправо — в пустое место ряда с иконками */
+    margin-left: auto;
+    margin-right: auto; /* центрировать в свободном месте ряда, не липнуть к краю */
     font-size: 1rem;
   }
 
