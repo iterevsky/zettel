@@ -1368,12 +1368,19 @@ body[data-theme="dark"] .share-fab-label:hover {
   .share-fab-wrap.share-fab-in { animation: none; }
 }
 
-/* === КОЛОФОН ОГЛАВЛЕНИЯ === */
+/* === КОЛОФОН: рядом с цитатой над оглавлением === */
+.quote-wrapper {
+  position: relative;
+}
+
 .toc-colophon {
-  margin: 3rem auto 2rem;
-  text-align: center;
+  position: absolute;
+  bottom: 0;
+  right: 20px;
+  text-align: right;
   font-family: 'Caveat', cursive;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
+  line-height: 1.45;
   color: #8a7d6c;
 }
 
@@ -1385,8 +1392,16 @@ body[data-theme="dark"] .share-fab-label:hover {
 }
 
 .toc-colophon a:hover { color: #c47f2a; border-color: #c47f2a; }
-.toc-colophon .colophon-sep { margin: 0 0.6em; opacity: 0.5; }
 body[data-theme="dark"] .toc-colophon { color: #7d7264; }
+
+@media (max-width: 768px) {
+  .toc-colophon {
+    position: static;
+    text-align: left;
+    margin-top: 0.6rem;
+    padding-left: 1em;
+  }
+}
 
 /* === МЕТКА «НОВОЕ» В ОГЛАВЛЕНИИ === */
 .toc-item.toc-new .toc-number::after {

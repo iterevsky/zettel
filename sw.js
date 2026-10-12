@@ -1,7 +1,7 @@
 /* Цеттель: офлайн-кэш.
    ВАЖНО: при любом изменении любого файла сайта
    (включая data.js с новыми заметками) — подними CACHE_VERSION */
-const CACHE_VERSION = 'zettel-v1';
+const CACHE_VERSION = 'zettel-v2';
 
 const PRECACHE = [
   '/zettel/',

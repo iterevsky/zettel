@@ -582,11 +582,6 @@
         `;
       });
       html += '</ul>';
-      html += '<footer class="toc-colophon">' +
-        '<a href="https://iterevsky.github.io/echo" target="_blank" rel="noopener">ЭХО — книга автора</a>' +
-        '<span class="colophon-sep">·</span>' +
-        '<a href="https://t.me/iterevsky" target="_blank" rel="noopener">Канал в Telegram</a>' +
-        '</footer>';
     }
 
     html += '</div>';
