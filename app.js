@@ -265,6 +265,12 @@
     });
   }
 
+  /* === Масштаб страницы фиксирован: пинч-зум отключён === */
+  /* (для текста заметок есть настройка размера шрифта в шторке «Aa») */
+  ['gesturestart', 'gesturechange', 'gestureend'].forEach((type) => {
+    document.addEventListener(type, (e) => e.preventDefault(), { passive: false });
+  });
+
   /* ---------- Splash screen & вступление «тихое растворение» ---------- */
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let quietActive = false;
